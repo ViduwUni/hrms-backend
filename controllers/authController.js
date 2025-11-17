@@ -7,6 +7,8 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
 
+const SESSION_DURATION = 2 * 60 * 60 * 1000;
+
 // Register
 export const register = async (req, res) => {
   const { username, email, password, isAdmin, canApprove } = req.body;
@@ -51,17 +53,29 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
 
     if (user.isLoggedIn && user.sessionId) {
-      return res.status(403).json({
-        message: "User already logged in on another browser/device",
-      });
+      if (user.sessionExpires && new Date() > user.sessionExpires) {
+        user.isLoggedIn = false;
+        user.sessionId = null;
+        user.sessionExpires = null;
+        await user.save();
+      } else {
+        return res.status(403).json({
+          message: "User already logged in on another browser/device",
+        });
+      }
     }
 
     const sessionId = uuidv4();
+    const expires = new Date(Date.now() + SESSION_DURATION);
+
     user.sessionId = sessionId;
     user.isLoggedIn = true;
+    user.sessionExpires = expires;
     user.lastLogin = new Date();
+    user.lastActivity = new Date();
 
     await user.save();
+
     const token = generateTokenWithSession(user._id, sessionId);
 
     res.json({
@@ -72,6 +86,7 @@ export const login = async (req, res) => {
       canApprove: user.canApprove,
       lastLogin: user.lastLogin,
       token,
+      sessionExpires: expires,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -85,6 +100,7 @@ export const logout = async (req, res) => {
 
     user.isLoggedIn = false;
     user.sessionId = null;
+    user.sessionExpires = null;
 
     await user.save();
 

@@ -6,14 +6,19 @@ import {
   updateOvertime,
   exportOvertimeExcel,
   approveOvertime,
-  rejectOvertime
+  rejectOvertime,
+  getPendingOvertimes,
 } from "../controllers/overtimeController.js";
-import { protect, requireApprovalPermission } from "../middleware/authMiddleware.js";
+import {
+  protect,
+  requireApprovalPermission,
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/", addOvertime);
 router.get("/", getOvertimes);
+router.get("/pending", getPendingOvertimes);
 router.get("/export", exportOvertimeExcel);
 router.put("/:id", updateOvertime);
 router.put("/:id/approve", protect, requireApprovalPermission, approveOvertime);

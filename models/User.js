@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema(
     lastLogin: { type: Date, default: null },
     isLoggedIn: { type: Boolean, default: false },
     sessionId: { type: String, default: null },
+    sessionExpires: { type: Date, default: null },
+    lastActivity: { type: Date, default: null },
   },
   { timestamps: true }
 );

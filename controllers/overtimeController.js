@@ -44,12 +44,9 @@ export const addOvertime = async (req, res) => {
     });
 
     await newOvertime.save();
-    await logOvertimeAudit(
-      "CREATE",
-      newOvertime._id,
-      req.body.performedBy,
-      { overtime: newOvertime }
-    );
+    await logOvertimeAudit("CREATE", newOvertime._id, req.body.performedBy, {
+      overtime: newOvertime,
+    });
     res
       .status(201)
       .json({ message: "Overtime entry added successfully", newOvertime });
@@ -123,12 +120,9 @@ export const updateOvertime = async (req, res) => {
     if (date) overtime.date = date;
 
     await overtime.save();
-    await logOvertimeAudit(
-      "UPDATE",
-      overtime._id,
-      req.body.performedBy,
-      { updatedFields: req.body }
-    );
+    await logOvertimeAudit("UPDATE", overtime._id, req.body.performedBy, {
+      updatedFields: req.body,
+    });
 
     res.json({ message: "Overtime entry updated successfully", overtime });
   } catch (err) {
@@ -151,16 +145,11 @@ export const approveOvertime = async (req, res) => {
     overtime.status = "Approved";
     await overtime.save();
 
-    await logOvertimeAudit(
-      "APPROVE",
-      overtime._id,
-      performedBy,
-      {
-        previousStatus,
-        newStatus: "Approved",
-        ...details,
-      }
-    );
+    await logOvertimeAudit("APPROVE", overtime._id, performedBy, {
+      previousStatus,
+      newStatus: "Approved",
+      ...details,
+    });
 
     res.json({ message: "Overtime approved", overtime });
   } catch (err) {
@@ -190,16 +179,11 @@ export const rejectOvertime = async (req, res) => {
     overtime.status = "Rejected";
     await overtime.save();
 
-    await logOvertimeAudit(
-      "REJECT",
-      overtime._id,
-      performedBy,
-      {
-        previousStatus,
-        newStatus: "Rejected",
-        ...details,
-      }
-    );
+    await logOvertimeAudit("REJECT", overtime._id, performedBy, {
+      previousStatus,
+      newStatus: "Rejected",
+      ...details,
+    });
 
     res.json({ message: "Overtime rejected", overtime });
   } catch (err) {
@@ -208,6 +192,18 @@ export const rejectOvertime = async (req, res) => {
   }
 };
 
+// Get pending ot
+export const getPendingOvertimes = async (req, res) => {
+  try {
+    const pending = await Overtime.find({ status: "Pending" })
+      .sort({ date: -1 })
+      .select("employeeNumber name date shift reason normalot");
+
+    res.json({ success: true, pending });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 // Excel export
 export const exportOvertimeExcel = async (req, res) => {
@@ -394,16 +390,13 @@ export const deleteOvertime = async (req, res) => {
     await Overtime.findByIdAndDelete(id);
 
     // Log the deleted record details
-    await logOvertimeAudit(
-      "DELETE",
-      id,
-      req.body.performedBy,
-      { deleted: true, overtime }
-    );
+    await logOvertimeAudit("DELETE", id, req.body.performedBy, {
+      deleted: true,
+      overtime,
+    });
 
     res.json({ message: "Overtime entry deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-

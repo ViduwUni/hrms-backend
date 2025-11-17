@@ -19,9 +19,23 @@ export const protect = async (req, res, next) => {
         return res.status(401).json({ message: "User not found" });
       }
 
+      // Session ID mismatch
       if (user.sessionId !== decoded.sessionId) {
         return res.status(403).json({
           message: "Your session expired or logged in somewhere else",
+        });
+      }
+
+      // Session expiry check
+      if (user.sessionExpires && new Date() > user.sessionExpires) {
+        // Reset session
+        user.sessionId = null;
+        user.isLoggedIn = false;
+        user.sessionExpires = null;
+        await user.save();
+
+        return res.status(403).json({
+          message: "Your session has expired. Please log in again.",
         });
       }
 
