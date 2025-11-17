@@ -7,6 +7,7 @@ import {
   getUserById,
   updateUser,
   deleteUser,
+  logout,
 } from "../controllers/authController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
@@ -15,6 +16,7 @@ const router = express.Router();
 // Public routes
 router.post("/register", register);
 router.post("/login", login);
+router.post("/logout", protect, logout);
 
 // Protected routes
 router.get("/profile", protect, getProfile);

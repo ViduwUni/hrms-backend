@@ -1,5 +1,7 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import { v4 as uuidv4 } from "uuid";
+import generateTokenWithSession from "../utils/generateTokenWithSession.js";
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -14,7 +16,13 @@ export const register = async (req, res) => {
     if (existingUser)
       return res.status(400).json({ message: "User already exists" });
 
-    const user = await User.create({ username, email, password, isAdmin, canApprove });
+    const user = await User.create({
+      username,
+      email,
+      password,
+      isAdmin,
+      canApprove,
+    });
 
     res.status(201).json({
       _id: user._id,
@@ -30,7 +38,6 @@ export const register = async (req, res) => {
 };
 
 // Login
-// Login
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -43,9 +50,19 @@ export const login = async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid email or password" });
 
-    // Update lastLogin
+    if (user.isLoggedIn && user.sessionId) {
+      return res.status(403).json({
+        message: "User already logged in on another browser/device",
+      });
+    }
+
+    const sessionId = uuidv4();
+    user.sessionId = sessionId;
+    user.isLoggedIn = true;
     user.lastLogin = new Date();
+
     await user.save();
+    const token = generateTokenWithSession(user._id, sessionId);
 
     res.json({
       _id: user._id,
@@ -54,8 +71,24 @@ export const login = async (req, res) => {
       isAdmin: user.isAdmin,
       canApprove: user.canApprove,
       lastLogin: user.lastLogin,
-      token: generateToken(user._id),
+      token,
     });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Logout
+export const logout = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    user.isLoggedIn = false;
+    user.sessionId = null;
+
+    await user.save();
+
+    res.json({ message: "Logged out successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -110,7 +143,8 @@ export const updateUser = async (req, res) => {
     user.email = req.body.email || user.email;
     if (req.body.password) user.password = req.body.password;
     if (typeof req.body.isAdmin === "boolean") user.isAdmin = req.body.isAdmin;
-    if (typeof req.body.canApprove === "boolean") user.canApprove = req.body.canApprove;
+    if (typeof req.body.canApprove === "boolean")
+      user.canApprove = req.body.canApprove;
 
     const updatedUser = await user.save();
 

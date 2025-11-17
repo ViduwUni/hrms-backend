@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema(
     isAdmin: { type: Boolean, default: false },
     canApprove: { type: Boolean, default: false },
     lastLogin: { type: Date, default: null },
+    isLoggedIn: { type: Boolean, default: false },
+    sessionId: { type: String, default: null },
   },
   { timestamps: true }
 );
