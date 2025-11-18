@@ -11,6 +11,7 @@ import downloadLogRoutes from "./routes/downloadLogRoutes.js";
 import overtimeAuditLogRoute from "./routes/overtimeAuditLogRoute.js";
 // Settings
 import overtimeReasonRoutes from "./routes/overtimeReasonRoutes.js";
+import otRoutes from "./routes/otRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -32,6 +33,7 @@ app.use("/api/tripleot", tripleOTRoutes);
 app.use("/api/downloadLog", downloadLogRoutes);
 app.use("/api/overtime-audit", overtimeAuditLogRoute);
 app.use("/api/settings/overtime-reasons", overtimeReasonRoutes);
+app.use("/api/settings/overtime-configs", otRoutes);
 
 app.get("/", (req, res) => res.send("API is running..."));
 
