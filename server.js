@@ -9,6 +9,7 @@ import overtimeRoutes from "./routes/overtimeRoutes.js";
 import tripleOTRoutes from "./routes/tripleOTRoutes.js";
 import downloadLogRoutes from "./routes/downloadLogRoutes.js";
 import overtimeAuditLogRoute from "./routes/overtimeAuditLogRoute.js";
+import logsRoutes from "./routes/logsRoutes.js";
 // Settings
 import overtimeReasonRoutes from "./routes/overtimeReasonRoutes.js";
 import otRoutes from "./routes/otRoutes.js";
@@ -22,7 +23,7 @@ connectDB();
 // const delay = (ms) => (req, res, next) => {
 //   setTimeout(next, ms);
 // };
-// app.use(delay(5000));
+// app.use(delay(2000));
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -32,6 +33,7 @@ app.use("/api/overtime", overtimeRoutes);
 app.use("/api/tripleot", tripleOTRoutes);
 app.use("/api/downloadLog", downloadLogRoutes);
 app.use("/api/overtime-audit", overtimeAuditLogRoute);
+app.use("/api/logs", logsRoutes);
 app.use("/api/settings/overtime-reasons", overtimeReasonRoutes);
 app.use("/api/settings/overtime-configs", otRoutes);
 
