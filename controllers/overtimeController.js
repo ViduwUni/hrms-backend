@@ -134,26 +134,45 @@ export const updateOvertime = async (req, res) => {
 // Approve Overtime records
 export const approveOvertime = async (req, res) => {
   try {
-    const { performedBy, ...details } = req.body;
-    const overtime = await Overtime.findById(req.params.id);
+    const { performedBy, approvedot, reason } = req.body;
 
+    const overtime = await Overtime.findById(req.params.id);
     if (!overtime)
       return res.status(404).json({ message: "Overtime entry not found" });
 
-    const previousStatus = overtime.status;
+    if (overtime.status === "Approved") {
+      return res.status(403).json({ message: "Already approved" });
+    }
 
+    // Validate approvedot
+    if (approvedot === undefined) {
+      return res.status(400).json({ message: "Approved OT value is required" });
+    }
+
+    // Save approved OT
+    overtime.approvedot = approvedot;
     overtime.status = "Approved";
+
+    // Update reason (optional)
+    if (reason !== undefined && reason !== "") {
+      overtime.reason = reason;
+    }
+
     await overtime.save();
 
     await logOvertimeAudit("APPROVE", overtime._id, performedBy, {
-      previousStatus,
+      approvedot,
+      updatedReason: reason || overtime.reason,
+      previousStatus: "Pending",
       newStatus: "Approved",
-      ...details,
     });
 
-    res.json({ message: "Overtime approved", overtime });
+    res.json({
+      message: "Overtime approved successfully",
+      overtime,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Approve Error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
@@ -295,6 +314,7 @@ export const exportOvertimeExcel = async (req, res) => {
       "Double OT",
       "Triple OT",
       "Night",
+      "Approved OT",
       "Status",
     ]);
 
@@ -344,6 +364,7 @@ export const exportOvertimeExcel = async (req, res) => {
           ot.doubleot,
           ot.tripleot,
           ot.night?.toLowerCase() === "yes" ? 1 : 0,
+          ot.approvedot || 0,
           ot.status || "Pending",
         ]);
       });
