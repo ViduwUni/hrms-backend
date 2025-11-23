@@ -271,12 +271,14 @@ export const exportOvertimeExcel = async (req, res) => {
     let totalNormal = 0;
     let totalDouble = 0;
     let totalTriple = 0;
+    let totalApproved = 0;
     let totalNight = 0;
 
     overtimes.forEach((ot) => {
       totalNormal += ot.normalot || 0;
       totalDouble += ot.doubleot || 0;
       totalTriple += ot.tripleot || 0;
+      totalApproved += ot.approvedot || 0;
       if (ot.night?.toLowerCase() === "yes") totalNight++;
     });
 
@@ -290,6 +292,7 @@ export const exportOvertimeExcel = async (req, res) => {
     sheet.addRow(["Total Normal OT:", `${totalNormal.toFixed(2)} hrs`]);
     sheet.addRow(["Total Double OT:", `${totalDouble.toFixed(2)} hrs`]);
     sheet.addRow(["Total Triple OT:", `${totalTriple.toFixed(2)} hrs`]);
+    sheet.addRow(["Total Approved OT:", `${totalApproved.toFixed(2)} hrs`]);
     sheet.addRow(["Total Night OT:", `${totalNight} shifts`]);
 
     const summaryRange = ["A6", "A7", "A8", "A9"];
@@ -398,6 +401,30 @@ export const exportOvertimeExcel = async (req, res) => {
     res.status(500).json({ message: "Failed to generate Excel file" });
   }
 };
+
+// Get overtime preview (same data as excel)
+export const getOvertimePreview = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: "Start and end dates required" });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const overtimes = await Overtime.find({
+      date: { $gte: start, $lte: end },
+    }).sort({ employeeNumber: 1, date: 1 });
+
+    res.json({ success: true, data: overtimes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 
 // Delete an overtime entry
 export const deleteOvertime = async (req, res) => {

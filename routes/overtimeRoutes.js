@@ -8,6 +8,7 @@ import {
   approveOvertime,
   rejectOvertime,
   getPendingOvertimes,
+  getOvertimePreview,
 } from "../controllers/overtimeController.js";
 import {
   protect,
@@ -20,6 +21,7 @@ router.post("/", addOvertime);
 router.get("/", getOvertimes);
 router.get("/pending", getPendingOvertimes);
 router.get("/export", exportOvertimeExcel);
+router.get("/preview", getOvertimePreview);
 router.put("/:id", updateOvertime);
 router.put("/:id/approve", protect, requireApprovalPermission, approveOvertime);
 router.put("/:id/reject", protect, requireApprovalPermission, rejectOvertime);
