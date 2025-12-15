@@ -9,7 +9,7 @@ const overtimeSchema = new mongoose.Schema(
     },
     employeeNumber: { type: String, required: true },
     name: { type: String, required: true },
-    shift: { type: String, enum: ["6:30am", "8:30am"], required: true },
+    shift: { type: String, enum: ["6:30am", "8:30am", "No Shift"], required: true },
     intime: { type: String, required: true },
     outtime: { type: String, required: true },
     reason: { type: String, required: false },

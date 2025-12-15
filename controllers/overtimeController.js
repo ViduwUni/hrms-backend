@@ -21,11 +21,48 @@ export const addOvertime = async (req, res) => {
       night = "no",
       status = "Pending",
       date,
+      noOT = false,
     } = req.body;
 
     const employee = await Employee.findOne({ employeeNumber });
     if (!employee)
       return res.status(404).json({ message: "Employee not found" });
+
+    // Handle No OT
+    if (noOT) {
+      const exists = await Overtime.findOne({ employeeNumber, date });
+      if (exists)
+        return res
+          .status(400)
+          .json({ message: "Already recorded for this date" });
+
+      const noOtEntry = new Overtime({
+        employee: employee._id,
+        employeeNumber,
+        name: employee.name,
+        shift: "No Shift", // placeholder (required)
+        intime: "00:00", // placeholder (required)
+        outtime: "00:00", // placeholder (required)
+        reason: "No OT",
+        normalot: 0,
+        doubleot: 0,
+        tripleot: 0,
+        night: "No",
+        approvedot: 0,
+        status: "Pending", // mark as “No OT”
+        date,
+      });
+
+      await noOtEntry.save();
+
+      await logOvertimeAudit("CREATE", noOtEntry._id, req.body.performedBy, {
+        overtime: noOtEntry,
+      });
+
+      return res
+        .status(201)
+        .json({ message: "No OT recorded", overtime: noOtEntry });
+    }
 
     const newOvertime = new Overtime({
       employee: employee._id,
@@ -424,7 +461,6 @@ export const getOvertimePreview = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
 
 // Delete an overtime entry
 export const deleteOvertime = async (req, res) => {
